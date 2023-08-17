@@ -1,0 +1,206 @@
+{
+	"_version": "1.32.0",
+    "sap.cloud": {
+        "public": true,
+        "service": "orders_service"
+    },
+	"sap.app": {
+		"id": "orders",
+		"type": "application",
+		"i18n": "i18n/i18n.properties",
+		"applicationVersion": {
+			"version": "0.0.1"
+		},
+		"title": "{{appTitle}}",
+		"description": "{{appDescription}}",
+		"dataSources": {
+			"mainService": {
+				"uri": "odata/v2/LeBiscuitService/",
+				"type": "OData",
+				"settings": {
+					"annotations": [],
+					"localUri": "localService/metadata.xml",
+					"odataVersion": "2.0"
+				}
+			},
+			"secondService":{
+				"uri": "order/",
+				"type": "JSON"
+			}
+		},
+		"crossNavigation": {
+            "inbounds": {
+                "fe-inbound": {
+                    "signature": {
+                        "parameters": {},
+                        "additionalParameters": "allowed"
+                    },
+                    "semanticObject": "SalesOrder",
+                    "action": "display",
+                    "title": "Pedido",
+                    "subTitle": "",
+                    "icon": "sap-icon://sales-order"
+                }
+            }   
+        }
+	},
+	"sap.ui": {
+		"technology": "UI5",
+		"icons": {
+			"icon": "",
+			"favIcon": "",
+			"phone": "",
+			"phone@2": "",
+			"tablet": "",
+			"tablet@2": ""
+		},
+		"deviceTypes": {
+			"desktop": true,
+			"tablet": true,
+			"phone": true
+		}
+	},
+	"sap.ui5": {
+		"flexEnabled": true,
+		"services": {
+			"ShellUIService": {
+				"factoryName": "sap.ushell.ui5service.ShellUIService"
+			}
+		},
+		"dependencies": {
+			"minUI5Version": "1.96.0",
+			"libs": {
+				"sap.ui.core": {}
+			}
+		},
+		"contentDensities": {
+			"compact": true,
+			"cozy": true
+		},
+		"models": {
+			"i18n": {
+				"type": "sap.ui.model.resource.ResourceModel",
+				"settings": {
+					"bundleName": "orders.i18n.i18n"
+				}
+			},
+			"": {
+				"dataSource": "mainService",
+				"preload": true,
+				"settings": {
+					"synchronizationMode": "None",
+					"operationMode": "Server",
+					"autoExpandSelect": true,
+					"earlyRequests": true,
+					"groupId": "$direct"
+				}
+			}
+		},
+		"resources": {
+			"css": [
+				{
+					"uri": "css/style.css"
+				}
+			]
+		},
+		"rootView": {
+			"viewName": "orders.menu.MasterView",
+			"type": "XML",
+			"async": true,
+			"id": "app"
+		},
+		"routing": {
+			"config": {
+				"routerClass": "sap.f.routing.Router",
+				"viewType": "XML",
+				"async": true,
+				"viewPath": "orders.view",
+				"bypassed": {
+					"target": ["notFound"]
+				},
+				"controlAggregation": "pages",
+				"controlId": "app",
+				"clearControlAggregation": false
+			},
+			"routes": [
+				{
+					"name": "worklistOrder",
+					"pattern": ":layout:",
+					"target": ["worklistOrder"]
+				},
+				{
+					"pattern": "SalesOrder/{objectId}/:layout:",
+					"name": "objectOrder",
+					"target": ["objectOrder", "objectOrderItens"]
+				},
+				{
+					"pattern": "Order/report/:layout:",
+					"name": "orderReport",
+					"target": ["orderReport"]
+				},
+				{
+					"pattern": "Itens/report/:layout:",
+					"name": "itensReport",
+					"target": ["itensReport"]
+				},
+				{
+					"pattern": "SalesOrderItens/{objectOrderId}/{objectId}/:layout:",
+					"name": "objectOrderItens",
+					"target": ["objectOrderItens", "objectOrder"]
+				},
+				{
+                    "pattern": "notAuthorized/:layout:",
+                    "name": "notAuthorized",
+                    "target": ["notAuthorized"]
+                }
+			],
+			"targets": {
+				"worklistOrder": {
+					"viewType": "XML",
+					"viewId": "ListReport",
+					"viewName": "order/ListReport",
+					"controlAggregation": "beginColumnPages"
+				},
+				"objectOrder": {
+					"viewType": "XML",
+					"controlAggregation": "beginColumnPages",
+					"viewId": "objectOrder",
+					"viewName": "order/ObjectOrder"
+				},
+				"objectOrderItens": {
+					"viewType": "XML",
+					"controlAggregation": "midColumnPages",
+					"viewId": "objectOrderItens",
+					"viewName": "order/ObjectOrderItens"
+				},
+				"orderReport": {
+					"viewType": "XML",
+					"viewId": "OrderReport",
+					"viewName": "orderReport/OrderReport",
+					"controlAggregation": "beginColumnPages"
+				},
+				"itensReport": {
+					"viewType": "XML",
+					"viewId": "itensReport",
+					"viewName": "ItensReport/ItensReport",
+					"controlAggregation": "beginColumnPages"
+				},
+				"objectNotFound": {
+					"controlAggregation": "beginColumnPages",
+					"viewName": "ObjectNotFound",
+					"viewId": "objectNotFound"
+				},
+				"notFound": {
+					"controlAggregation": "beginColumnPages",
+					"viewName": "NotFound",
+					"viewId": "notFound"
+				},
+				"notAuthorized": {
+					"controlAggregation": "beginColumnPages",
+                    "viewName": "NotAuthorized",
+                    "viewId": "notAuthorized"
+                }
+			}
+		}
+	}
+}
