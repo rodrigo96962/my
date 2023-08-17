@@ -1,0 +1,27 @@
+server:
+  port: 8080
+
+---
+#-- The below configuration is enabled **only** when activating the 'local' profile for Spring Boot
+spring:
+  config:
+    activate:
+      on-profile:
+        - local
+
+#-- The following lines are required to run your application locally. Please refer to this documentation for further information:
+#-- https://github.com/SAP/cloud-security-xsuaa-integration/tree/main/spring-security#local-setup-fails-with-application-failed-to-start
+sap:
+  url: https://sandbox.api.sap.com/subscriptionbilling/api/bill/v2/bills?billingType=CHARGE&pageNumber=1&pageSize=40&$count=true
+  apikey: hGgdH3MUN7vq9bfZLVJ7xTRI83SBuQ4E
+  security:
+    services:
+      xsuaa:
+        xsappname: businesspartner-52dc7d6ctrial-dev!t135925
+        uaadomain: authentication.us10.hana.ondemand.com
+        clientid: sb-businesspartner-52dc7d6ctrial-dev!t135925
+        clientsecret: tfI02/nIZ/DWetPV+hAfdGSue+Y=
+        url: https://52dc7d6ctrial.authentication.us10.hana.ondemand.com
+
+
+#Santander config

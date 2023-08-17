@@ -1,0 +1,18 @@
+{
+  "welcomeFile": "/payments/",
+  "authenticationMethod": "route",
+  "routes": [
+    {
+      "source": "/srv",
+      "target": "/",
+      "destination": "srv",
+      "authenticationType": "xsuaa"
+    },
+    {
+      "source": "^(/.*)$",
+      "target": "$1",
+      "destination": "mtt-html5-repo-runtime",
+      "authenticationType": "xsuaa"
+    }
+  ]
+}

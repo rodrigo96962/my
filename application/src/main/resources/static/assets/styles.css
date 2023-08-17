@@ -1,0 +1,16 @@
+.header {
+    width: auto;
+    padding: 1rem 1.5rem;
+
+    background-color: rgb(028, 100, 190);
+    margin: -8px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16) 0 3px 6px rgba(0,0,0,0.23);
+}
+
+td.thicker {
+    font-weight: 900;
+  }

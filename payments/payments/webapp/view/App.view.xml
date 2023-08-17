@@ -1,0 +1,201 @@
+<mvc:View controllerName="payments.controller.App"
+xmlns:html="http://www.w3.org/1999/xhtml"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+    xmlns:l="sap.ui.layout"
+    xmlns="sap.m"
+    xmlns:u="sap.ui.unified"
+    xmlns:core="sap.ui.core"
+    xmlns:ce="sap.ui.codeeditor"
+    >
+    <Toolbar id="toolbar">
+        <!-- <ToolbarSpacer id="spacer"/> -->
+        <DateRangeSelection
+			id="DRS4"
+            placeholder="Selecionar data início e final"
+			change="handleChange"
+            showCurrentDateButton="true"
+			showFooter="true"
+			value= "{
+				'type': 'sap.ui.model.type.DateInterval',
+				'formatOptions': {
+					'pattern': 'yyyy/MM/dd'
+				},
+                'parts': [
+					{
+						'type': 'sap.ui.model.type.Date',
+						'path': '/oDRS3Start'
+					},
+					{
+						'type': 'sap.ui.model.type.Date',
+						'path': '/oDRS3End'
+					}
+				]
+			}"/>
+        <Button id="approve" text="15 dias" press="fastFilterDays(15)" />
+        <Button id="Reject" text="30 dias" press="fastFilterDays(30)"/>
+        <Button id="favorite" text="60 dias" press="fastFilterDays(60)"/>
+        <Button id="clear" text="Limpar" press="loadDefaultList()"/>
+    </Toolbar>
+    <Shell id="appShell">
+        <App id="appApp">
+            <pages>
+                <Page id="homePage" title="Débito direto autorizado - DDA">
+                <headerContent>
+                <ObjectNumber
+                        id="objNumber"
+                        visible="{balanceVisible>/isVisible}"
+                        number="{ path: 'balance>/availableAmount',
+						    	type: 'sap.ui.model.type.Float',
+							    formatOptions: {
+                                    minFractionDigits: 2,
+                                    maxFractionDigits: 2
+                                    }
+                                }"
+						unit="BRL"/>
+                    <ObjectAttribute id="cnpjTest" text="{'20022234000147', formatter: '.formatter.cnpj'}" />
+                    <Button id="btnHead" icon="sap-icon://hide" press="showHideBalance"  tooltip="Mostrar/Esconder" ></Button>
+                </headerContent>
+                            <IconTabBar
+                                id="idIconTabBarInlineMode"
+                                headerMode="Inline"
+                                expanded="{device>/isNoPhone}"
+                                class="sapUiResponsiveContentPadding">
+                            <items>
+                                <IconTabFilter
+                                    id="ah"
+                                    text="Todos"
+                                    key="info">
+                                    <content>
+                        <Panel id="helloPagePanel">
+                            <List id="listx"
+                                mode="MultiSelect"
+                                class="sapUiResponsiveMargin"
+                                width="auto"
+                                items="{response>/}"
+		                        noDataText="Sem boletos disponíveis."
+                                busy='{loading>/loading}'
+                                selectionChange="updatePaymentBadge"
+                                 >
+                                 <headerToolbar>
+                                    <OverflowToolbar id="toolbarList">
+                                        <content>
+                                            <ToolbarSpacer id="toolbarSpacer"/>
+                                            <Button id="BadgedButton"
+                                                    class="sapUiTinyMarginBeginEnd"
+                                                    icon="sap-icon://payment-approval"
+                                                    type="Emphasized"
+                                                    text="{= ${bankslips>/quantity} > 1 ? 'Pagar boletos selecionados' : 'Pagar boleto selecionado'  }"
+                                                    enabled="{= ${bankslips>/quantity} ? true : false  }"
+                                                    press="onPayBankslipsPress"
+                                                    ariaHasPopup="Dialog"
+                                                    >
+                                                <customData>
+                                                    <BadgeCustomData id="customData"
+                                                                    key="badge"
+                                                                    value="{bankslips>/quantity}"
+                                                                    visible="true"
+                                                                    animation="Full"/>
+                                                </customData>
+                                            </Button>
+                                        </content>
+                                    </OverflowToolbar>
+                                    </headerToolbar>
+                                <items>
+                                    <ObjectListItem
+                                        id="itemx"
+                                        title="{response>beneficiary/beneficiaryName}"
+                                        number="{ path: 'response>nominalValue',
+                                                    type: 'sap.ui.model.type.Float',
+                                                    formatOptions: {
+                                                        minFractionDigits: 2,
+                                                        maxFractionDigits: 2
+                                                        }
+                                                    }"
+                                        numberUnit="BRL"
+                                        icon="sap-icon://bar-code"
+                                        >
+			                            <ObjectAttribute  id="code" text="{path: 'response>code', formatter: '.formatter.barcode'}" />
+                                        <ObjectAttribute id="dueDate" text="Data vencimento: {response>dueDate}" />
+			                            <ObjectAttribute id="cnpj" text="{path: 'response>beneficiary/beneficiaryDocument', formatter: '.formatter.cnpj'}" />
+                                        <firstStatus>
+                                        <ObjectStatus
+                                            id='status'
+                                            text="{path: 'response>titleSituationEnum', formatter: '.formatter.statusEnumConverter'}"
+                                            state="{path: 'response>titleSituationEnum', formatter: '.formatter.statusState' }"
+                                             />
+                                    </firstStatus>
+                                    </ObjectListItem>
+                                </items>
+                            </List>
+                        </Panel>
+                    </content>
+                                </IconTabFilter>
+                                <IconTabFilter
+                                    id="ah2"
+                                    text="Pagos"
+                                    key="attachments">
+                                    <content>
+                        <Panel id="helloPagePanel2">
+                            <List id="listy"
+                                mode="None"
+                                class="sapUiResponsiveMargin"
+                                width="auto"
+                                items="{responsePaid>/}"
+		                        noDataText="Sem boletos pagos."
+                                busy='{loading>/loading}'
+                                 >
+                                  <headerToolbar>
+                                    <OverflowToolbar id="toolbarList1">
+                                        <content>
+                                            <ToolbarSpacer id="toolbarSpacer1"/>
+                                            <Button id="BadgedButton1"
+                                                    class="sapUiTinyMarginBeginEnd"
+                                                    icon="sap-icon://refresh"
+                                                    type="Emphasized"
+                                                    text="Atualizar página"
+                                                    press="updatePayed"
+                                                    >
+                                            </Button>
+                                        </content>
+                                    </OverflowToolbar>
+                                    </headerToolbar>
+                                <items>
+                                    <ObjectListItem
+                                        id="itemPayed"
+                                        title="{responsePaid>beneficiary/beneficiaryName}"
+                                        press="getReceiptByBarcode"
+                                        number="{ path: 'responsePaid>nominalValue',
+                                                    type: 'sap.ui.model.type.Float',
+                                                    formatOptions: {
+                                                        minFractionDigits: 2,
+                                                        maxFractionDigits: 2
+                                                        }
+                                                    }"
+                                        numberUnit="BRL"
+                                        icon="sap-icon://expense-report"
+                                        type="Active"
+                                        >
+			                            <ObjectAttribute  id="codePayed" text="{path: 'responsePaid>code', formatter: '.formatter.barcode'}" />
+                                        <ObjectAttribute id="payedDate" text="Data de pagamento: {responsePaid>dueDate}" />
+			                            <ObjectAttribute id="cnpjPayed" text="{path: 'responsePaid>beneficiary/beneficiaryDocument', formatter: '.formatter.cnpj'}" />
+                                        <firstStatus>
+                                        <ObjectStatus
+                                            id='statusPayed'
+                                            text="Pago"
+                                            state="Success"
+                                             />
+                                    </firstStatus>
+                                    </ObjectListItem>
+                                </items>
+                            </List>
+                        </Panel>
+                    </content>
+                                </IconTabFilter>
+                                </items>
+                            </IconTabBar>
+                   
+                </Page>
+            </pages>
+        </App>
+    </Shell>
+</mvc:View>

@@ -1,0 +1,193 @@
+_schema-version: '3.1'
+ID: firstMtJavaApp
+version: 1.0.0
+description: "firstMtJavaApp application"
+parameters:
+  enable-parallel-deployments: true
+modules:
+
+
+# --------------------- SERVER MODULE ------------------------
+  - name: firstmtjavaapp-srv
+# ------------------------------------------------------------  
+    type: java
+    path: application
+    parameters:
+      memory: 1500M
+      disk-quota: 512M
+      buildpack: sap_java_buildpack
+      host: santander-firstmtjavaapp-srv
+    build-parameters:
+      builder: custom
+      commands:
+        - mvn clean package -DskipTests=true
+      build-result: target/*.jar
+    provides:
+      - name: srv
+        properties:
+          node_app_url: '${default-url}'
+    requires:
+      - name: firstmtjavaapp-mt-uaa
+      - name: firstmtjavaapp-mt-saas-registry
+      - name: destination-app
+      - name: mtt-html5-repo-runtime
+      - name: Router_api
+        properties:
+          APP_URI: ~{uri}
+
+# --------------------- APPROUTER MODULE ---------------------
+  - name: first-mt-java-app
+# ------------------------------------------------------------
+    type: nodejs
+    path: app
+    parameters:
+      memory: 512M
+      disk-quota: 512M
+      host: santander-first-mt-java-app
+      keep-existing: 
+        routes: true
+    provides:
+      - name: Router_api
+        properties:
+          url: '${default-url}'
+          application: ${app-name}
+          uri: ${default-uri}
+    requires:
+      - name: firstmtjavaapp-mt-uaa
+      - name: mtt-html5-repo-runtime
+      - name: destination-app
+      - name: srv
+        properties: 
+          name: srv
+          url: '~{node_app_url}'
+          HTML5.DynamicDestination: true
+          forwardAuthToken: true
+           
+    properties:
+      TENANT_HOST_PATTERN: "^(.*)-first-mt-java-app.${default-domain}"
+
+# --------------------- HTML5 APPS --------------------
+  - name: payments
+    type: html5
+    path: payments/payments/
+    build-parameters:
+      build-result: dist
+      builder: custom
+      commands:
+      - npm install
+      - npm run build:cf
+      supported-platforms: []
+
+# -------------------- APP DEPLOYER -------------------
+  - name: payments-app-content 
+    type: com.sap.application.content
+    path: payments/payments/
+    requires:
+    - name: payments-repo-host
+      parameters:
+        content-target: true
+    build-parameters:
+      build-result: resources
+      requires:
+      - artifacts:
+        - payments.zip
+        name: payments
+        target-path: resources/
+
+# --------------------- RESOURCES ---------------------
+resources:
+
+# --------------------- HTML5 RUNTIME -----------------
+ - name: mtt-html5-repo-runtime
+   type: org.cloudfoundry.managed-service
+   requires:
+     - name: srv
+   parameters:
+      service: html5-apps-repo
+      service-plan: app-runtime
+
+# --------------- HTML5 APP REPOSITORY ----------------
+ - name: payments-repo-host
+   type: org.cloudfoundry.managed-service
+   parameters:
+      service: html5-apps-repo
+      service-name: payments-html5-srv
+      service-plan: app-host
+
+# --------------------- DESTINATION -------------------
+ - name: destination-app
+   type: org.cloudfoundry.managed-service
+   parameters:
+      service: destination
+      service-plan: lite
+      config:
+        init_data:
+          instance:
+            existing_destinations_policy: ignore
+            destinations:
+              - Name: firstmtjavaapp-cfapi
+                Description: CF Cloud Controller API
+                URL: ${controller-url}
+                Type: HTTP
+                ProxyType: Internet
+                Authentication: OAuth2Password
+                tokenServiceURL: ${authorization-url}/oauth/token
+                clientId: cf
+                clientSecret:
+                User: <SetValueInCockpit>
+                Password: <SetValueInCockpit>
+              - Name: destination-saphub
+                Description: Northwind
+                URL: https://sandbox.api.sap.com/s4hanacloud
+                Type: HTTP
+                ProxyType: Internet
+                Authentication: NoAuthentication
+              - Name: srv
+                Description: SusaaS Service API
+                URL: ~{node_app_url}
+                Type: HTTP
+                ProxyType: Internet
+                Authentication: NoAuthentication
+                HTML5.DynamicDestination: true
+                forwardAuthToken: true
+
+# ----------------------- XSUAA ------------------------
+ - name: firstmtjavaapp-mt-uaa
+   type: org.cloudfoundry.managed-service
+   requires:
+    - name: Router_api
+   properties:
+      XSAPPNAME: ${xsuaa-app}
+   parameters:
+      path: ./xs-security.json
+      service-plan: application
+      service: xsuaa
+      shared: true
+      xsuaa-app: ${space}-~{Router_api/application}
+      config:
+         xsappname: ${xsuaa-app}
+         tenant-mode: shared
+         description: Security profile of called application
+
+# ---------------------- SAAS ------------------------
+ - name: firstmtjavaapp-mt-saas-registry
+   type: org.cloudfoundry.managed-service
+   requires:
+    - name: firstmtjavaapp-mt-uaa
+    - name: srv
+    - name: Router_api
+   parameters:
+      service: saas-registry
+      service-plan: application
+      config:
+         xsappname: ~{firstmtjavaapp-mt-uaa/XSAPPNAME}
+         appName: firstMtJavaAppt
+         displayName: Santander BAAS
+         description: 'App Banco Santander para Consulta de Dados'
+         category: 'Santander'
+         appUrls:
+            getDependencies: https://santander-firstmtjavaapp-srv.${default-domain}/callback/v1.0/dependencies
+            onSubscription: https://santander-firstmtjavaapp-srv.${default-domain}/callback/v1.0/tenants/{tenantId}
+            onSubscriptionAsync: false
+            onUnSubscriptionAsync: false
+            callbackTimeoutMillis: 200000
